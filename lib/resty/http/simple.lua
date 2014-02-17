@@ -292,7 +292,7 @@ local function _receive(self, sock)
     
     if keepalive then
 	local connection = headers["Connection"]
-	conenction = connection and lower(connection) or nil
+	connection = connection and lower(connection) or nil
 	if connection then
 	    if connection == "close" then
 		keepalive = false
