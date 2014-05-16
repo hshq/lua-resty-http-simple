@@ -32,7 +32,7 @@ API
 
 request
 ---
-`syntax: local res, err = http:new(host, port, options)`
+`syntax: local res, err = http.request(host, port, options?)`
 
 Perform an http request.
 
@@ -51,6 +51,8 @@ An optional Lua `options` table can be specified to declare various options:
 : Specifies query parameters. Accepts either a string or a Lua table.
 * `headers`
 : Specifies request headers. Accepts a Lua table. 
+* `body`
+: Specifies request body for POST method. Only accepts a string.
 * `timeout`
 : Sets the timeout in milliseconds for network operations. Defaults to `5000`.
 * `version`
