@@ -298,7 +298,7 @@ local function _receive(self, sock)
 		keepalive = false
 	    end
 	else
-	    if self.version == 0 then
+	    if self.opts.version == 0 then
 		keepalive = false
 	    end
 	end
