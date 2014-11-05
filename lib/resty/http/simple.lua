@@ -287,6 +287,9 @@ local function _receive(self, sock)
     end
     
     if not body then 
+        if err then
+            return nil, err
+        end
 	keepalive = false
     end
     
