@@ -54,12 +54,12 @@ end
 function normalize_header(key)
     local val = common_headers[key]
     if val then
-	return val
+        return val
     end
     key = lower(key)
     val = common_headers[key]
     if val then
-	return val
+        return val
     end
     -- normalize it ourselves. do not cache it as we could explode our memory usage
     key = gsub(key, "^%l", upper)
@@ -75,69 +75,69 @@ end
 local function _req_header(self, opts)
     -- Initialize request
     local req = {
-	upper(opts.method or "GET"),
-	" "
+        upper(opts.method or "GET"),
+        " "
     }
 
     -- Append path
     local path = opts.path
     if type(path) ~= "string" then
-	path = "/"
+        path = "/"
     elseif sub(path, 1, 1) ~= "/" then
-	path = "/" .. path
+        path = "/" .. path
     end
     insert(req, path)
 
     -- Normalize query string
     if type(opts.query) == "table" then
-	opts.query = encode_args(opts.query)
+        opts.query = encode_args(opts.query)
     end
 
     -- Append query string
     if type(opts.query) == "string" then
-	insert(req, "?" .. opts.query)
+        insert(req, "?" .. opts.query)
     end
 
     -- Close first line
     if opts.version == 1 then
-	insert(req, HTTP_1_1)
+        insert(req, HTTP_1_1)
     else
-	insert(req, HTTP_1_0)
+        insert(req, HTTP_1_0)
     end
 
     -- Normalize headers
     opts.headers = opts.headers or {}
     local headers = {}
     for k,v in pairs(opts.headers) do
-	headers[normalize_header(k)] = v
+        headers[normalize_header(k)] = v
     end
     
     if opts.body then
-	headers['Content-Length'] = #opts.body
+        headers['Content-Length'] = #opts.body
     end
     if not headers['Host'] then
-	headers['Host'] = self.host
+        headers['Host'] = self.host
     end
     if not headers['User-Agent'] then
-	headers['User-Agent'] = USER_AGENT
+        headers['User-Agent'] = USER_AGENT
     end
     if not headers['Accept'] then
-	headers['Accept'] = "*/*"
+        headers['Accept'] = "*/*"
     end
     if version == 0 and not headers['Connection'] then
-	headers['Connection'] = "Keep-Alive"
+        headers['Connection'] = "Keep-Alive"
     end
     
     -- Append headers
     for key, values in pairs(headers) do
-	if type(values) ~= "table" then
-	    values = {values}
-	end
-	
-	key = tostring(key)
-	for _, value in pairs(values) do
-	    insert(req, key .. ": " .. tostring(value) .. "\r\n")
-	end
+        if type(values) ~= "table" then
+            values = {values}
+        end
+
+        key = tostring(key)
+        for _, value in pairs(values) do
+            insert(req, key .. ": " .. tostring(value) .. "\r\n")
+        end
     end
     
     -- Close headers
@@ -150,30 +150,29 @@ local function _parse_headers(sock)
     local headers = {}
     
     repeat
-	local line = sock:receive()
-	
-	for key, val in gmatch(line, "([%w%-]+)%s*:%s*(.+)") do
-	    key = normalize_header(key)
-	    if headers[key] then
-		local delimiter = ", "
-		if key == "Set-Cookie" then
-		    delimiter = "; "
-		end
-		headers[key] = headers[key] .. delimiter .. tostring(val)
-	    else
-		headers[key] = tostring(val)
-	    end
-	end
+        local line = sock:receive()
+
+        for key, val in gmatch(line, "([%w%-]+)%s*:%s*(.+)") do
+            key = normalize_header(key)
+            if headers[key] then
+                local delimiter = ", "
+                if key == "Set-Cookie" then
+                    delimiter = "; "
+                end
+                headers[key] = headers[key] .. delimiter .. tostring(val)
+            else
+                headers[key] = tostring(val)
+            end
+        end
     until sfind(line, "^%s*$")
     
     return headers, nil
 end
 
 local function _receive_length(sock, length)
-
     local chunk, err = sock:receive(length)
     if not chunk then
-	return nil, err
+        return nil, err
     end
     
     return chunk, nil
@@ -186,33 +185,33 @@ local function _receive_chunked(sock, maxsize)
     local size = 0
     local done = false
     repeat
-	local str, err = sock:receive("*l")
-	if not str then
-	    return nil, err
-	end
+        local str, err = sock:receive("*l")
+        if not str then
+            return nil, err
+        end
 
-	local length = tonumber(str, 16)
-	
-	if not length then
-	    return nil, "unable to read chunksize"
-	end
+        local length = tonumber(str, 16)
 
-	size = size + length
-	if maxsize and size > maxsize then
-	    return nil, 'exceeds maxsize'
-	end
-	
-	if length > 0 then
-	    local str, err = sock:receive(length)
-	    if not str then
-		return nil, err
-	    end
-	    insert(chunks, str)
-	else
-	    done = true
-	end
-	-- read the \r\n
-	sock:receive(2)
+        if not length then
+            return nil, "unable to read chunksize"
+        end
+
+        size = size + length
+        if maxsize and size > maxsize then
+            return nil, 'exceeds maxsize'
+        end
+
+        if length > 0 then
+            local str, err = sock:receive(length)
+            if not str then
+                return nil, err
+            end
+            insert(chunks, str)
+        else
+            done = true
+        end
+        -- read the \r\n
+        sock:receive(2)
     until done
 
     return concat(chunks), nil
@@ -224,27 +223,27 @@ local function _receive_all(sock, maxsize)
     local arg = maxsize and (maxsize + 1) or "*a"
     local chunk, err, partial = sock:receive(arg)
     if maxsize then
-	-- if we didn't get an error, it means that the upstream still had data to write
-	-- which means it exceeded maxsize
-	if not err then
-	      return nil, 'exceeds maxsize'
-	else
-	    -- you read to closed in this situation so, if upstream did not close
-	    -- then its an error
-	    if err ~= "closed" then
-		return nil, err
-	    else
-		-- this seems odd but is correct, bcs of how ngx_lua
-		-- handled the rror case, which is actually a success
-		-- in this scenerio
-		chunk = partial
-	    end
-	end
+        -- if we didn't get an error, it means that the upstream still had data to write
+        -- which means it exceeded maxsize
+        if not err then
+            return nil, 'exceeds maxsize'
+        else
+            -- you read to closed in this situation so, if upstream did not close
+            -- then its an error
+            if err ~= "closed" then
+                return nil, err
+            else
+                -- this seems odd but is correct, bcs of how ngx_lua
+                -- handled the rror case, which is actually a success
+                -- in this scenerio
+                chunk = partial
+            end
+        end
     end
 
     -- in the case of reading all til closed, closed is not a "valid" error
     if not chunk then
-	return nil, err
+        return nil, err
     end
     return chunk, nil
 end
@@ -252,14 +251,14 @@ end
 local function _receive(self, sock)
     local line, err = sock:receive()
     if not line then
-	return nil, err
+        return nil, err
     end
 
     local status = tonumber(sub(line, 10, 12))
 
     local headers, err = _parse_headers(sock)
     if not headers then
-	return nil, err
+        return nil, err
     end
 
     local maxsize = self.opts.maxsize
@@ -271,46 +270,46 @@ local function _receive(self, sock)
     local keepalive = true
        
     if length then
-	if maxsize and length > maxsize then
-	    body, err =  nil, 'exceeds maxsize'
-	else
-	    body, err = _receive_length(sock, length)
-	end
+        if maxsize and length > maxsize then
+            body, err =  nil, 'exceeds maxsize'
+        else
+            body, err = _receive_length(sock, length)
+        end
     else
-	local encoding = headers["Transfer-Encoding"]
-	if encoding and lower(encoding) == "chunked" then
-	    body, err = _receive_chunked(sock, maxsize)
-	else
-	    body, err = _receive_all(sock, maxsize)
-	    keepalive = false
-	end
+        local encoding = headers["Transfer-Encoding"]
+        if encoding and lower(encoding) == "chunked" then
+            body, err = _receive_chunked(sock, maxsize)
+        else
+            body, err = _receive_all(sock, maxsize)
+            keepalive = false
+        end
     end
     
     if not body then 
         if err then
             return nil, err
         end
-	keepalive = false
+        keepalive = false
     end
     
     if keepalive then
-	local connection = headers["Connection"]
-	connection = connection and lower(connection) or nil
-	if connection then
-	    if connection == "close" then
-		keepalive = false
-	    end
-	else
-	    if self.opts.version == 0 then
-		keepalive = false
-	    end
-	end
+        local connection = headers["Connection"]
+        connection = connection and lower(connection) or nil
+        if connection then
+            if connection == "close" then
+                keepalive = false
+            end
+        else
+            if self.opts.version == 0 then
+                keepalive = false
+            end
+        end
     end
     
     if keepalive then
-	sock:setkeepalive()
+        sock:setkeepalive()
     else
-	sock:close()
+        sock:close()
     end
     
     return { status = status, headers = headers, body = body }
@@ -320,45 +319,45 @@ local function _request(host, port, opts)
     opts = opts or {}
     local sock, err = tcp()
     if not sock then
-	return nil, err
+        return nil, err
     end
 
     sock:settimeout(opts.timeout or 5000)
     
     local rc, err = sock:connect(host, port)
     if not rc then
-	return nil, err
+        return nil, err
     end
     
     local version = opts.version
     if version then
-	if version ~= 0 and version ~= 1 then
-	    return nil, "unknown HTTP version"
-	end
+        if version ~= 0 and version ~= 1 then
+            return nil, "unknown HTTP version"
+        end
     else
-	opts.version = 1
+        opts.version = 1
     end
-    
+
     local self = {
-	host = host,
-	port = port,
-	sock = sock,
-	opts = opts
+        host = host,
+        port = port,
+        sock = sock,
+        opts = opts
     }
 
     -- Build and send request header
     local header = _req_header(self, opts)
     local bytes, err = sock:send(header)
     if not bytes then
-	return nil, err
+        return nil, err
     end
 
     -- Send the body if there is one
     if opts and type(opts.body) == "string" then
-	local bytes, err = sock:send(opts.body)
-	if not bytes then
-	    return nil, err
-	end
+        local bytes, err = sock:send(opts.body)
+        if not bytes then
+            return nil, err
+        end
     end
 
     return _receive(self, sock)
@@ -370,7 +369,7 @@ local function _get_or_post(opts)
     opts.host = nil
     opts.port = nil
 
-    if not opts.headers.Host then
+    if opts.headers and not opts.headers.Host then
         local Host = port == 80 and host or host .. ':' .. port
         opts.headers.Host = Host
     end
