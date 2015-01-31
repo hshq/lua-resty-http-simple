@@ -36,8 +36,8 @@ local USER_AGENT = "Resty/HTTP-Simple " .. _VERSION .. " (Lua)"
 -- canonical names for common headers
 local common_headers = {
     "Cache-Control",
-    "Content-Length", 
-    "Content-Type", 
+    "Content-Length",
+    "Content-Type",
     "Date",
     "ETag",
     "Expires",
@@ -111,7 +111,7 @@ local function _req_header(self, opts)
     for k,v in pairs(opts.headers) do
         headers[_normalize_header(k)] = v
     end
-    
+
     if opts.body then
         headers['Content-Length'] = #opts.body
     end
@@ -127,7 +127,7 @@ local function _req_header(self, opts)
     if version == 0 and not headers['Connection'] then
         headers['Connection'] = "Keep-Alive"
     end
-    
+
     -- Append headers
     for key, values in pairs(headers) do
         if type(values) ~= "table" then
@@ -139,16 +139,16 @@ local function _req_header(self, opts)
             insert(req, key .. ": " .. tostring(value) .. "\r\n")
         end
     end
-    
+
     -- Close headers
     insert(req, "\r\n")
-    
+
     return concat(req)
 end
 
 local function _parse_headers(sock)
     local headers = {}
-    
+
     repeat
         local line = sock:receive()
 
@@ -165,7 +165,7 @@ local function _parse_headers(sock)
             end
         end
     until sfind(line, "^%s*$")
-    
+
     return headers, nil
 end
 
@@ -174,7 +174,7 @@ local function _receive_length(sock, length)
     if not chunk then
         return nil, err
     end
-    
+
     return chunk, nil
 end
 
@@ -262,13 +262,13 @@ local function _receive(self, sock)
     end
 
     local maxsize = self.opts.maxsize
-       
+
     local length = tonumber(headers["Content-Length"])
     local body
     local err
-    
+
     local keepalive = true
-       
+
     if length then
         if maxsize and length > maxsize then
             body, err =  nil, 'exceeds maxsize'
@@ -284,14 +284,14 @@ local function _receive(self, sock)
             keepalive = false
         end
     end
-    
-    if not body then 
+
+    if not body then
         if err then
             return nil, err
         end
         keepalive = false
     end
-    
+
     if keepalive then
         local connection = headers["Connection"]
         connection = connection and lower(connection) or nil
@@ -305,14 +305,14 @@ local function _receive(self, sock)
             end
         end
     end
-    
+
     if keepalive then
         sock:setkeepalive()
     else
         sock:close()
     end
-    
-    return { status = status, headers = headers, body = body }
+
+    return { line = line, status = status, headers = headers, body = body }
 end
 
 local function _request(host, port, opts)
@@ -323,12 +323,12 @@ local function _request(host, port, opts)
     end
 
     sock:settimeout(opts.timeout or 5000)
-    
+
     local rc, err = sock:connect(host, port)
     if not rc then
         return nil, err
     end
-    
+
     local version = opts.version
     if version then
         if version ~= 0 and version ~= 1 then
@@ -365,14 +365,15 @@ end
 
 local function _get_or_post(opts)
     local host, port = opts.host, tonumber(opts.port) or 80
+    local headers = opts.headers or {}
 
     opts.host = nil
     opts.port = nil
 
-    if opts.headers and not opts.headers.Host then
-        local Host = port == 80 and host or host .. ':' .. port
-        opts.headers.Host = Host
+    if not headers.Host then
+        headers.Host = (port == 80 and host or host .. ':' .. port)
     end
+    opts.headers = headers
 
     return _request(host, port, opts)
 end
