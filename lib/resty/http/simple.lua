@@ -51,7 +51,7 @@ for _,key in ipairs(common_headers) do
     rawset(common_headers, lower(key), key)
 end
 
-function normalize_header(key)
+local function _normalize_header(key)
     local val = common_headers[key]
     if val then
         return val
@@ -109,7 +109,7 @@ local function _req_header(self, opts)
     opts.headers = opts.headers or {}
     local headers = {}
     for k,v in pairs(opts.headers) do
-        headers[normalize_header(k)] = v
+        headers[_normalize_header(k)] = v
     end
     
     if opts.body then
@@ -153,7 +153,7 @@ local function _parse_headers(sock)
         local line = sock:receive()
 
         for key, val in gmatch(line, "([%w%-]+)%s*:%s*(.+)") do
-            key = normalize_header(key)
+            key = _normalize_header(key)
             if headers[key] then
                 local delimiter = ", "
                 if key == "Set-Cookie" then
