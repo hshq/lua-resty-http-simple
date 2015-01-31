@@ -1,3 +1,6 @@
+
+-- XXX 需要提供 ngx.encode_args & ngx.socket.tcp
+
 local pairs    = pairs
 local type     = type
 local tonumber = tonumber
@@ -17,7 +20,6 @@ local ipairs = ipairs
 local rawset = rawset
 local rawget = rawget
 local min = math.min
-local ngx = ngx
 
 module(...)
 
@@ -55,7 +57,7 @@ function normalize_header(key)
 	return val
     end
     key = lower(key)
-    val = common_headers[lower(key)]
+    val = common_headers[key]
     if val then
 	return val
     end
@@ -146,7 +148,6 @@ end
 
 local function _parse_headers(sock)
     local headers = {}
-    local mode    = nil
     
     repeat
 	local line = sock:receive()
@@ -169,7 +170,6 @@ local function _parse_headers(sock)
 end
 
 local function _receive_length(sock, length)
-    local chunks = {}
 
     local chunk, err = sock:receive(length)
     if not chunk then
@@ -316,12 +316,7 @@ local function _receive(self, sock)
     return { status = status, headers = headers, body = body }
 end
 
-
---------------------------------------
--- PUBLIC API                       --
---------------------------------------
-
-function request(host, port, opts)
+local function _request(host, port, opts)
     opts = opts or {}
     local sock, err = tcp()
     if not sock then
@@ -369,3 +364,34 @@ function request(host, port, opts)
     return _receive(self, sock)
 end
 
+local function _get_or_post(opts)
+    local host, port = opts.host, tonumber(opts.port) or 80
+
+    opts.host = nil
+    opts.port = nil
+
+    if not opts.headers.Host then
+        local Host = port == 80 and host or host .. ':' .. port
+        opts.headers.Host = Host
+    end
+
+    return _request(host, port, opts)
+end
+
+
+--------------------------------------
+-- PUBLIC API                       --
+--------------------------------------
+request = _request
+
+-- request(host, port, opts):
+--      opts: +host [+port] -method
+function get(opts)
+    opts.method = 'GET'
+    return _get_or_post(opts)
+end
+
+function post(opts)
+    opts.method = 'POST'
+    return _get_or_post(opts)
+end
