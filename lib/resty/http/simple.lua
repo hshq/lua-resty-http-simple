@@ -30,7 +30,8 @@ module = module or function(name, ...)
         mod          = {}
         mod._M       = mod
         mod._NAME    = name
-        mod._PACKAGE = string.match(name, '(.+%.)[^%.]+')
+        --mod._PACKAGE = name:match('(.+%.)[^%.]+')
+        mod._PACKAGE = name:gsub('[^.]+$', '')
         loaded[name] = mod
     end
     --_ENV = mod -- XXX 用于直接在模块中声明module函数
