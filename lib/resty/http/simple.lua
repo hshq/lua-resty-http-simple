@@ -21,7 +21,24 @@ local rawset = rawset
 local rawget = rawget
 local min = math.min
 
-module(...)
+--[[
+-- XXX 兼容v5.1
+module = module or function(name, ...)
+    local loaded = package.loaded
+    local mod = loaded[name]
+    if not mod then
+        mod          = {}
+        mod._M       = mod
+        mod._NAME    = name
+        mod._PACKAGE = string.match(name, '(.+%.)[^%.]+')
+        loaded[name] = mod
+    end
+    --_ENV = mod -- XXX 用于直接在模块中声明module函数
+    return mod   --     否则在模块中：local _ENV = module(...)
+end
+--]]
+
+local _ENV = module(...)
 
 _VERSION = "0.1.0"
 
