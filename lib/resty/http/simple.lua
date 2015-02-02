@@ -22,7 +22,7 @@ local rawget = rawget
 local min = math.min
 
 --[[
--- XXX 兼容v5.1
+-- XXX 部分兼容v5.1
 module = module or function(name, ...)
     local loaded = package.loaded
     local mod = loaded[name]
