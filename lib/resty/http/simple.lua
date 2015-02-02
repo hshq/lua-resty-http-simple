@@ -34,6 +34,13 @@ module = module or function(name, ...)
         mod._PACKAGE = name:gsub('[^.]+$', '')
         loaded[name] = mod
     end
+    for _, fn in ipairs{...} do
+        -- XXX v5.2及以后，require加传第二参数，见manual，
+        --      影响module(...)方式调用，因此需要判断
+        if type(fn) == 'function' then
+            fn(mod)
+        end
+    end
     --_ENV = mod -- XXX 用于直接在模块中声明module函数
     return mod   --     否则在模块中：local _ENV = module(...)
 end
