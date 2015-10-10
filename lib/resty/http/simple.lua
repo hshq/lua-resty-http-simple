@@ -149,7 +149,7 @@ local function _req_header(self, opts)
     if not headers['Accept'] then
         headers['Accept'] = "*/*"
     end
-    if version == 0 and not headers['Connection'] then
+    if opts.version == 1 and not headers['Connection'] then
         headers['Connection'] = "Keep-Alive"
     end
 
